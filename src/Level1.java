@@ -5,7 +5,7 @@ public class Level1 {
     /**
      * Keeps track of the generated prime numbers.
      */
-    static LinkedHashSet<Long> primes = new LinkedHashSet<>();
+    static LinkedHashSet<Integer> primes = new LinkedHashSet<>();
 
     public static void main(String[] args) {
         System.out.println(solution(3));
@@ -21,7 +21,7 @@ public class Level1 {
         StringBuilder generatedPrimeString = new StringBuilder();
 
         // Generates the prime string up to the index specified + 5
-        for (long j = 1; j <= i + 5; j++) {
+        for (int j = 1; j <= i + 5; j++) {
             if (generatedPrimeString.length() > i + 5)
                 break;
             generatedPrimeString.append(nthPrime(j));
@@ -38,8 +38,8 @@ public class Level1 {
      * @param p The index of the prime number to generate.
      * @return The nth prime number.
      */
-    public static long nthPrime(long p) {
-        long num = 2;
+    public static int nthPrime(int p) {
+        int num = 2;
         while (p != 0) {
             if (isPrime(num)) {
                 primes.add(num);
@@ -56,16 +56,16 @@ public class Level1 {
      * @param num The number to check for primality.
      * @return True if the number is prime, false otherwise.
      */
-    private static boolean isPrime(long num) {
+    private static boolean isPrime(int num) {
         int primeRange = (int) Math.ceil(Math.sqrt(num));
         if (primes.isEmpty()) return true;
-        long stop = 0;
-        for (long prime : primes) {
+        int stop = 0;
+        for (int prime : primes) {
             stop = prime;
             if (prime > primeRange || num == prime) return true;
             if (num % prime == 0) return false;
         }
-        for (long i = stop; i < primeRange; i++) {
+        for (int i = stop; i < primeRange; i++) {
             if (num % i == 0) return false;
         }
         return true;
