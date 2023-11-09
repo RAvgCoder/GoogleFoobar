@@ -6,38 +6,37 @@ public class Level2 {
     }
 
     public static int[] solution(int[] arr, int ans) {
-        int curr_ptr = 0;
-        int sub_ptr = -1;
+        int currPtr = 0; // Starts at the beginning of the list
+        int subPtr = -1; // Starts before the list as you don't want to subtract anything yet
         int[] prefixSum = new int[arr.length];
 
         // Compute prefix sum
-        int sum = 0;
+        int prefix_sum = 0;
         for (int i = 0; i < prefixSum.length; i++) {
-            prefixSum[i] = arr[i] + sum;
-            sum += arr[i];
+            prefixSum[i] = arr[i] + prefix_sum;
+            prefix_sum += arr[i];
         }
 
         // Check the prefix sum for the sublist
-        while (sub_ptr <= curr_ptr && curr_ptr < prefixSum.length) {
-            int subSum = (sub_ptr == -1) ? 0 : prefixSum[sub_ptr];
-            int currSum = prefixSum[curr_ptr] - subSum;
+        while (subPtr <= currPtr && currPtr < prefixSum.length) {
+            int subSum = (subPtr == -1) ? 0 : prefixSum[subPtr];
+            int currSum = prefixSum[currPtr] - subSum;
 
             if (currSum == ans) break;
-            else if (currSum < ans) curr_ptr++;
-            else sub_ptr++;
+            else if (currSum < ans) currPtr++;
+            else subPtr++;
         }
-
 
         int[] ansArray;
         // If the `curr_ptr` grew past the bounds of the array
-        if (curr_ptr == prefixSum.length)
+        if (currPtr == prefixSum.length)
             ansArray = new int[]{-1, -1};
         /*
          If the sum was found, you add 1 to sub_ptr as sub_ptr stop at the number being
          subtracted, and we only want numbers that would contribute to the sum
          */
         else
-            ansArray = new int[]{sub_ptr + 1, curr_ptr};
+            ansArray = new int[]{subPtr + 1, currPtr};
 
         return ansArray;
     }
