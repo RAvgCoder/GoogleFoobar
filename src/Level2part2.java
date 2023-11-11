@@ -31,9 +31,12 @@ public class Level2part2 {
     }
 
     public static int solution(int[] num) {
+        // Map Keys the index {0-9}, Values the frequency of the digits in said index
         int[] hashMap = new int[10];
 
+
         int sum = 0;
+        // Fill the map with the number frequency
         for (int n : num) {
             hashMap[n]++;
             sum += n;
@@ -73,6 +76,7 @@ public class Level2part2 {
             }
         }
 
+        // If numbers still not divisible then return 0 else the ans
         return (ans % 3 != 0) ? 0 : ans;
     }
 }
