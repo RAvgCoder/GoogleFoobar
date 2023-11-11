@@ -54,7 +54,7 @@ public class Level2part2 {
                 changingModVal += 3;
             }
 
-            // if its ment to end but the mod val initially was 1, then try a mod value of 2
+            // if it's meant to end but the mod val initially was 1, then try a mod value of 2
             if (changingModVal != 0 && originMod != 2) {
                 changingModVal = 2;
                 originMod = 2;
@@ -64,7 +64,7 @@ public class Level2part2 {
             if (changingModVal >= 10) changingModVal = --prevModVal;
         }
 
-        // Build the resulting numbers
+        // Build the resulting numbers from highest to the lowest digits
         int ans = 0;
         for (int i = 9; i >= 0; i--) {
             while (hashMap[i] != 0) {
