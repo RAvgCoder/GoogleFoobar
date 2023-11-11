@@ -1,5 +1,17 @@
 import java.util.Arrays;
 
+/**
+ * You are given an array of integers arr and a target sum ans.
+ * Find a contiguous sublist within the array such that the sum of its elements is equal to the target sum.
+ * The function should return an array representing the starting and ending indices of the sublist.
+ * If not found return -1,-1
+ * <p>
+ * -- Test cases --
+ * <p>
+ * The array = {1,2,3,4}, Sum = 15 => {-1,-1}
+ * <p>
+ * The array = {4,3,10,2,8}, Sum = 12 => {2,3}
+ */
 public class Level2part1 {
     public static void main(String[] args) {
         System.out.println(Arrays.toString(solution(new int[]{1, 2, 3, 4}, 15)));
