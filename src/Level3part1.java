@@ -70,7 +70,7 @@ import java.util.HashMap;
  * <p>
  * Input:Solution.solution(3)Output:    1
  */
-public class Level2part3 {
+public class Level3part1 {
     // HashMap to store already calculated results for specific subproblems
     private static final HashMap<String, Integer> memoizationMap = new HashMap<>();
     // The total number of different staircases that can be built
