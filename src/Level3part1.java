@@ -90,16 +90,16 @@ public class Level3part1 {
     // Recursive function to generate the decision tree and calculate staircases
     private static void generateDecisionTree(int lastStepNum, int remainingAfterPreviousStep) {
         // Iterate through possible step heights
-        for (int i = lastStepNum + 1; i <= remainingAfterPreviousStep; i++) {
-            int remainingAfterCurrentStep = (remainingAfterPreviousStep - i);
+        for (int currentStep = lastStepNum + 1; currentStep <= remainingAfterPreviousStep; currentStep++) {
+            int remainingAfterCurrentStep = (remainingAfterPreviousStep - currentStep);
 
             // If no bricks remain, we have found a valid staircase
             if (remainingAfterCurrentStep == 0) ans++;
                 // If the current step height is less than remaining bricks, continue generating the tree
-            else if (i < remainingAfterCurrentStep) {
+            else if (currentStep < remainingAfterCurrentStep) {
 
                 // Create a unique key to represent the subproblem
-                String subproblemKey = i + "," + remainingAfterCurrentStep;
+                String subproblemKey = currentStep + "," + remainingAfterCurrentStep;
 
                 // Check if the result for this subproblem is already calculated
                 if (memoizationMap.containsKey(subproblemKey)) {
@@ -109,7 +109,7 @@ public class Level3part1 {
                     int nodeAnswerSnapShot = ans;
 
                     // Generate decision trees for the current step
-                    generateDecisionTree(i, remainingAfterCurrentStep);
+                    generateDecisionTree(currentStep, remainingAfterCurrentStep);
 
                     // Store the result for this subproblem in the memoization map
                     memoizationMap.put(subproblemKey, ans - nodeAnswerSnapShot);
