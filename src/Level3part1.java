@@ -85,17 +85,19 @@ public class Level3part1 {
 
     /**
      * Function to calculate the number of different staircases
+     *
      * @param numOfBlocksToUse Number of blocks you want to build your stairs with
      * @return Number of ways to build those stairs
      */
     public static int solution(int numOfBlocksToUse) {
         // Starts with zero height used and no blocks used
         generateDecisionTree(0, numOfBlocksToUse);
-        return totalNumberOfStaircases-1;
+        return totalNumberOfStaircases - 1;
     }
 
     /**
      * Recursive function to generate the decision tree and calculate staircases
+     *
      * @param lastStairHeight The height of the last Stair that was built
      * @param blocksRemaining The number of blocks left to build the stairs
      */
@@ -107,7 +109,7 @@ public class Level3part1 {
             // If no bricks remain, we have found a valid staircase
             if (remainingAfterCurrentStep == 0) totalNumberOfStaircases++;
 
-            // If the current step height is less than remaining bricks, continue generating the tree
+                // If the current step height is less than remaining bricks, continue generating the tree
             else if (currentStairHeight < remainingAfterCurrentStep) {
 
                 // Create a unique key to represent the subproblem
