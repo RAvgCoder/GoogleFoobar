@@ -19,51 +19,98 @@ import java.util.Arrays;
  * Input:Solution.solution({{0, 2, 1, 0, 0}, {0, 0, 0, 3, 4}, {0, 0, 0, 0, 0}, {0, 0, 0, 0,0}, {0, 0, 0, 0, 0}})Output:    [7, 6, 8, 21]
  */
 public class Level3part3 {
-    public static void main(String[] args) {
-        int[][] m =
-                {
-                        {0, 1, 0, 0, 0, 1},
-                        {4, 0, 0, 3, 2, 0},
-                        {0, 0, 0, 0, 0, 0},
-                        {0, 0, 0, 0, 0, 0},
-                        {0, 0, 0, 0, 0, 0},
-                        {0, 0, 0, 0, 0, 0}
-                };
-
-        System.out.println(solution(m));
-    }
 
     public static int[] solution(int[][] m) {
         // Your code here
+        Matrix origin = new Matrix(m);
         Matrix orderMatrix = new Matrix(m);
         orderMatrix.absorb();
-        orderMatrix.print("Absorb");
 
         // now separate into R,Q
 
-        Matrix subMatrixR = Matrix.subMatrix(orderMatrix, 0, orderMatrix.IDENTITY_SIZE - 1, orderMatrix.IDENTITY_SIZE, orderMatrix._int.length);
-        subMatrixR.print("Sub_R");
+        Matrix R = Matrix.subMatrix(orderMatrix, 0, orderMatrix.IDENTITY_SIZE - 1, orderMatrix.IDENTITY_SIZE, orderMatrix._int.length);
 
-        Matrix subMatrixQ = findQ(orderMatrix);
-        subMatrixQ.print("Sub_Q");
+        Matrix Q = findQ(orderMatrix);
+
+        R = fixR(R, Q);
 
         // Calculate F {(I-Q)^-1}
-        Matrix identity = Matrix.identity(subMatrixQ.lenY());
-        identity.print("Identity");
-
-        System.out.println(Frac.simplify(new Frac(4,8)));
+        Matrix identity = Matrix.identity(Q.lenY());
 
         // I - Q
-        Matrix I_Q = identity.sub(subMatrixQ);
-        I_Q.print("I_Q");
+        Matrix I_Q = identity.sub(Q);
 
 
         // {(I-Q)^-1}
-        Matrix.inverse(I_Q);
+        Matrix F = I_Q.inverse();
+        // FR
+        Matrix FR = F.mul(R);
 
-        int[] a = new int[1];
+        Frac[] numerator = new Frac[FR._frac[0].length];
+        int[] denominator = new int[FR._frac[0].length];
+
+        int i=0;
+        for (Frac f : FR._frac[0]){
+            numerator[i] = f;
+            denominator[i] = f.getDenom();
+            i++;
+        }
+
+        int LCM = findLCM(denominator);
+        int []res = new int[numerator.length+1];
+        if (origin._int[1][1] == 0 && origin._int.length ==2){
+            res[0] = 1;
+            res[1] = 1;
+            return res;
+        }else {
+            for (int j = 0; j < res.length-1; j++) {
+                numerator[j] = numerator[j].mul(new Frac(LCM,1));
+                res[j] = numerator[j].getNum();
+            }
+            res[numerator.length] = LCM;
+            return res;
+        }
+    }
+
+    public static int findLCM(int[] numbers) {
+        // Initialize lcm variable with the first number in the array
+        int lcm = numbers[0];
+
+        // Iterate through the array to find the LCM of all numbers
+        for (int i = 1; i < numbers.length; i++) {
+            lcm = calculateLCM(lcm, numbers[i]);
+        }
+
+        return lcm;
+    }
+
+        // Function to calculate the LCM of two numbers
+    public static int calculateLCM(int a, int b) {
+        return (a * b) / calculateGCD(a, b);
+    }
+
+    // Function to calculate the Greatest Common Divisor (GCD) using Euclidean Algorithm
+    public static int calculateGCD(int a, int b) {
+        while (b != 0) {
+            int temp = b;
+            b = a % b;
+            a = temp;
+        }
         return a;
+    }
 
+    private static Matrix fixR(Matrix R, Matrix Q) {
+        Matrix newR = R.toFrac();
+        for (int i = 0; i < newR.flenY(); i++) {
+            int denomQ = 1;
+            for (int k = 0; k < Q.flenX()-1; k++) {
+                denomQ = Math.max(denomQ, Q.fgetNum(i,k).getDenom());
+            }
+            for (int j = 0; j < newR.flenX(); j++) {
+                newR._frac[i][j].setDenom(denomQ);
+            }
+        }
+        return newR;
     }
 
     private static Matrix findQ(Matrix orderMatrix) {
@@ -109,6 +156,11 @@ class Matrix {
         }
     }
 
+    public Matrix(Frac[][] res) {
+        IDENTITY_SIZE = -1;
+        _frac = res;
+    }
+
     public static Matrix identity(int size) {
         Matrix m = new Matrix();
         m.IDENTITY_SIZE = -1;
@@ -126,7 +178,7 @@ class Matrix {
         for (int i = 0; i < n.length; i++) {
             for (int j = 0; j < n[0].length; j++) {
                 m._frac[i][j] = new Frac();
-                m._frac[i][j].nom = n[i][j];
+                m._frac[i][j].setNum(n[i][j]);
             }
         }
         return m;
@@ -155,62 +207,81 @@ class Matrix {
         return res;
     }
 
-    public static Frac[][] inverse(Matrix I_Q) {
-        Frac[][] matrix = I_Q._frac;
-
-        Frac[][] res = new Frac[I_Q.lenY()][I_Q.lenY()];
-        Frac det = I_Q.determinant(matrix, I_Q.lenY());
-
-        if (det.equals(new Frac())) return res;
-        Frac[][] adjoint = new Frac[I_Q.lenY()][I_Q.lenY()];
-        adjoint(matrix,adjoint);
-        return res;
-    }
-
     private static void adjoint(Frac[][] matrix, Frac[][] adjoint) {
-        int N = matrix.length-1;
+        int N = matrix.length;
         if (N == 1) {
-            adjoint[0][0] = new Frac(1,1);
+            adjoint[0][0] = new Frac(1, 1);
             return;
         }
 
-        Frac sign = new Frac(1,1);
+        Frac sign = new Frac(1, 1);
         Frac[][] tmp = new Frac[N][N];
 
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+                getCofactors(matrix, tmp, i, j, N);
+                sign.setNum(((i + j) % 2 == 0) ? 1 : -1);
+                adjoint[j][i] = sign.mul(determinant(tmp, N - 1));
+            }
+        }
     }
 
-    public Frac determinant(Frac[][] matrix, int n) {
+    public static Frac determinant(Frac[][] matrix, int n) {
         Frac result = new Frac();
+        int N = matrix.length;
 
         if (n == 1)
-            return _frac[0][0];
+            return matrix[0][0];
 
-        Frac sign = new Frac(1,1);
+        Frac sign = new Frac(1, 1);
 
-        Frac[][] tmp = new Frac[lenY()][lenY()];
-        for (int i = 0; i < lenY(); i++) {
-            getCofactors(matrix,tmp,0,i,n);
-            result.accumulate(sign.mul(_frac[0][i]).mul(determinant(tmp,n-1)));
+        Frac[][] tmp = new Frac[N][N];
+        for (int f = 0; f < n; f++) {
+            getCofactors(matrix, tmp, 0, f, n);
+            Frac z = sign.mul(matrix[0][f]);
+            Frac _z = z.mul(determinant(tmp, n - 1));
+            result.accumulate(_z);
             sign.neg();
         }
         return result;
     }
 
-    private void getCofactors(Frac[][] matrix, Frac[][] tmp, int i, int j, int n) {
-        int x = 0;
-        int y = 0;
-        for (int k = 0; k < n; k++) {
-            for (int l = 0; l < n; l++) {
-                if (k != i && l != j) {
-                    tmp[x][y] = matrix[k][l].copy();
+    private static void getCofactors(Frac[][] A, Frac[][] tmp, int p, int q, int n) {
+        int i = 0;
+        int j = 0;
+        for (int row = 0; row < n; row++) {
+            for (int col = 0; col < n; col++) {
+                if (row != p && col != q) {
+                    tmp[i][j] = A[row][col].copy();
 
-                    if (++y == n - 1) {
-                        y = 0;
+                    if (++j == n - 1) {
+                        j = 0;
                         i++;
                     }
                 }
             }
         }
+    }
+
+    public Matrix inverse() {
+        Frac[][] res = new Frac[lenY()][lenY()];
+
+        Frac det = determinant(_frac, lenY());
+
+        if (det.equals(new Frac())) throw new RuntimeException("Singular matrix, can't find its inverse");
+
+        Frac[][] adjoint = new Frac[lenY()][lenY()];
+        adjoint(_frac, adjoint);
+
+        for (int i = 0; i < lenY(); i++) {
+            for (int j = 0; j < lenY(); j++) {
+                res[i][j] = adjoint[i][j].divide(det);
+            }
+        }
+
+        Matrix m = new Matrix();
+        m._frac = res;
+        return m;
     }
 
     public int lenX() {
@@ -271,11 +342,14 @@ class Matrix {
         _int[0][0] = '$';
     }
 
-    private int getNum(int i, int j) {
+    public int getNum(int i, int j) {
         return _int[i + 1][j + 1];
     }
+    public Frac fgetNum(int i, int j) {
+        return _frac[i+1][j+1];
+    }
 
-    private void setNum(int i, int j, int val) {
+    public void setNum(int i, int j, int val) {
         _int[i + 1][j + 1] = val;
     }
 
@@ -286,72 +360,6 @@ class Matrix {
                 return i;
         }
         throw new IllegalStateException("Shouldn't reach this point, index should be found");
-    }
-
-    public void print(String name) {
-        int j = 1;
-        System.out.println(name);
-        if (_int != null) {
-            for (int[] n : _int) {
-                int i = 1;
-                for (int e : n) {
-                    System.out.print(e + "\t");
-                    if (i++ == IDENTITY_SIZE) System.out.print("|\t");
-                }
-                if (j++ == IDENTITY_SIZE) {
-                    System.out.println();
-                    System.out.print("-\t".repeat(n.length + 1));
-                }
-                System.out.println();
-            }
-        } else {
-            for (Frac[] n : _frac) {
-                int i = 1;
-                for (Frac e : n) {
-                    System.out.print(e + "\t");
-                    if (i++ == IDENTITY_SIZE) System.out.print("|\t");
-                }
-                if (j++ == IDENTITY_SIZE) {
-                    System.out.println();
-                    System.out.print("-\t".repeat(n.length + 1));
-                }
-                System.out.println();
-            }
-        }
-        System.out.println();
-    }
-
-    public void printC(String name) {
-        int j = 1;
-        System.out.println(name);
-        if (_int != null) {
-            for (int[] n : _int) {
-                int i = 1;
-                for (int e : n) {
-                    System.out.print((char) e + "\t");
-                    if (i++ == IDENTITY_SIZE) System.out.print("|\t");
-                }
-                if (j++ == IDENTITY_SIZE) {
-                    System.out.println();
-                    System.out.print("-\t".repeat(n.length + 1));
-                }
-                System.out.println();
-            }
-        } else {
-            for (Frac[] n : _frac) {
-                int i = 1;
-                for (Frac e : n) {
-//                    System.out.print((char) e + "\t");
-                    if (i++ == IDENTITY_SIZE) System.out.print("|\t");
-                }
-                if (j++ == IDENTITY_SIZE) {
-                    System.out.println();
-                    System.out.print("-\t".repeat(n.length + 1));
-                }
-                System.out.println();
-            }
-        }
-        System.out.println();
     }
 
     public Matrix sub(Matrix other) {
@@ -374,10 +382,50 @@ class Matrix {
         }
         return m;
     }
+
+    public int flenY() {
+        return _frac.length;
+    }
+
+    public int flenX() {
+        return _frac[0].length;
+    }
+
+    public Matrix mul(Matrix other) {
+        Frac[][] res = new Frac[this.flenY()][other.flenX()];
+
+        for (int row = 0; row < res.length; row++) {
+            for (int col = 0; col < res[row].length; col++) {
+                res[row][col] = this.mulCell(other._frac, row, col);
+            }
+        }
+
+        return new Matrix(res);
+    }
+
+    private Frac mulCell(Frac[][] other, int row, int col) {
+        Frac res = new Frac();
+        for (int i = 0; i < other.length; i++) {
+            Frac z =_frac[row][i].mul(other[i][col]);
+            res.accumulate(z);
+        }
+        return res;
+    }
+
+    public Matrix toFrac() {
+        Matrix res = new Matrix();
+        res._frac = new Frac[_int.length-1][_int[0].length-1];
+        for (int i = 1, ri = 0; i < this._int.length; i++, ri++) {
+            for (int j = 1, rj = 0; j < this._int[0].length; j++, rj++) {
+                res._frac[ri][rj] = new Frac(_int[i][j], 1);
+            }
+        }
+        return res;
+    }
 }
 
 class Frac {
-    int nom = 0;
+    private int num = 0;
     private int denom = 1;
     private boolean isSigned = false;
 
@@ -388,66 +436,108 @@ class Frac {
         if (denominator == 0) {
             throw new NumberFormatException("Number cannot have 0 denominator");
         }
-        this.nom = nominator;
+        this.num = nominator;
         denom = denominator;
     }
 
-    public void setDenom(int denom) {
-        this.denom = (nom == 0) ? 1 : denom;
-    }
-
-    @Override
-    public String toString() {
-        return (nom == 0 || denom == 1) ? nom + "" : nom + "/" + denom;
-    }
-
-    public void sub(int _int, Frac frac) {
-        nom = _int - frac.nom;
-        isSigned = nom < 0;
-        denom = frac.denom;
-        simplify(frac);
-    }
-
-    public Frac add(Frac other){
-        return other;
-    }
-
-    public Frac accumulate(Frac other) {
-        return null;
-    }
-
-    public Frac copy() {
-        return new Frac(nom, denom);
-    }
-
-    public Frac mul(Frac other) {
-        return simplify(new Frac(nom*other.nom,denom* other.denom));
-    }
-
     public static Frac simplify(Frac frac) {
-        if (frac.nom == frac.denom)
-            return new Frac(1,1);
-        else {
+        if (frac.num == 0) {
+            frac.denom = 1;
+        }
+        if (frac.num == frac.denom) {
+            frac.num = 1;
+            frac.denom = 1;
+        } else {
             while (true) {
                 boolean hit = false;
-                for (int i = Math.max(frac.nom,frac.denom); i >= 2; i--) {
-                    if (frac.nom%i==0 && frac.denom%i==0) {
-                        frac.nom = frac.nom/i;
-                        frac.denom = frac.denom/i;
+                for (int i = Math.max(frac.num, frac.denom); i >= 2; i--) {
+                    if (frac.num % i == 0 && frac.denom % i == 0) {
+                        frac.num = frac.num / i;
+                        frac.denom = frac.denom / i;
                         hit = true;
                     }
                 }
                 if (!hit) break;
             }
-            return frac;
         }
+        return frac;
+    }
+
+    public int getDenom() {
+        return denom;
+    }
+
+    public void setDenom(int denom) {
+        if (denom == 0) throw new  NumberFormatException("numd");
+        this.denom = (num == 0) ? 1 : denom;
+    }
+
+    public int getNum() {
+        return num;
+    }
+
+    public void setNum(int num) {
+        isSigned = this.num < 0;
+        this.num = num;
+    }
+
+    @Override
+    public String toString() {
+        return (num == 0 || denom == 1) ? num + "" : num + "/" + denom;
+    }
+
+    public void sub(int _int, Frac frac) {
+        num = _int - frac.num;
+        isSigned = num < 0;
+        denom = frac.denom;
+        simplify(frac);
+    }
+
+    public Frac add(Frac other) {
+        Frac result = new Frac();
+        int denom = this.denom * other.denom;
+        int lhs = denom * (this.num) / this.denom;
+        int rhs = denom * (other.num) / other.denom;
+        result.setNum(lhs + rhs);
+        result.denom = denom;
+        return simplify(result);
+    }
+
+    public void accumulate(Frac other) {
+        final Frac a = this.add(other);
+        setNum(a.num);
+        setDenom(a.denom);
+        simplify(this);
+    }
+
+    public Frac copy() {
+        return new Frac(num, denom);
+    }
+
+    public Frac mul(Frac other) {
+        Frac res = new Frac(this.num * other.num, this.denom * other.denom);
+        res.setSigned(this.signed() * other.signed());
+        return simplify(res);
+    }
+
+    public void setSigned(int signed) {
+        isSigned = signed < 0;
+    }
+
+    public int signed() {
+        return (this.isSigned) ? -1 : 1;
     }
 
     public boolean equals(Frac other) {
-        return nom == other.nom && denom == other.denom && isSigned == other.isSigned;
+        return num == other.num && denom == other.denom && isSigned == other.isSigned;
     }
 
     public void neg() {
-        isSigned = !isSigned;
+        setNum(-num);
+    }
+
+    public Frac divide(Frac det) {
+        Frac res = new Frac(det.denom, det.num);
+        return this.mul(res);
     }
 }
